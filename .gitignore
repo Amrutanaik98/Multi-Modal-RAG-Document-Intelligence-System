@@ -1,5 +1,4 @@
-cat > .gitignore << 'EOF'
-# Environment variables
+﻿# Environment variables
 .env
 .env.local
 .env.*.local
@@ -7,7 +6,7 @@ cat > .gitignore << 'EOF'
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
+*.class
 *.so
 .Python
 env/
@@ -21,6 +20,7 @@ ENV/
 *.swp
 *.swo
 *~
+*.swp
 
 # OS
 .DS_Store
@@ -53,5 +53,3 @@ output/logs/**/*.log
 *.log
 .cache/
 *.tmp
-EOF
-cat .gitignore
