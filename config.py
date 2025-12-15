@@ -4,6 +4,11 @@ Global configuration for the project
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import pytesseract
+
+# IMPORTANT: Tell Python where Tesseract is installed
+# Windows path - adjust if you installed to different location
+pytesseract.pytesseract.pytesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 # Load environment variables
 load_dotenv()
