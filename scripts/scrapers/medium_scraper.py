@@ -1,8 +1,3 @@
-"""
-Medium Scraper
-Scrapes educational articles from Medium.com
-"""
-
 import requests
 from bs4 import BeautifulSoup
 from typing import Dict, List
@@ -11,6 +6,8 @@ import sys
 from pathlib import Path
 import json
 import time
+import pandas as pd
+
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -182,19 +179,6 @@ def main():
     
     scraper = MediumScraper()
     
-    # Topics to search
-    topics = [
-        "machine learning",
-        "deep learning",
-        "NLP",
-        "AI"
-    ]
-    
-    print(f"Scraping {len(topics)} topics from Medium...\n")
-    
-    # Note: This will be limited due to Medium's anti-scraping measures
-    # For better results, consider using Medium's API or RSS feeds
-    
     # Alternative: Use predefined article URLs
     article_urls = [
         "https://medium.com/towards-data-science/machine-learning-basics-1eee2d7f1697",
@@ -207,22 +191,6 @@ def main():
         articles.append(result)
         time.sleep(1)
     
-    # Save results
-    if articles:
-        output_file = RAW_DATA_DIR / "medium_articles.json"
-        with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump({
-                'metadata': {
-                    'timestamp': datetime.now().isoformat(),
-                    'source': 'medium',
-                    'total_articles': len(articles)
-                },
-                'articles': articles
-            }, f, indent=2, ensure_ascii=False)
-        
-        logger.info(f"[OK] Saved {len(articles)} articles to: {output_file}")
-        print(f"[OK] Saved {len(articles)} articles to: {output_file}")
-    
     # Print summary
     print(f"\n{'='*70}")
     print(f"Total Articles Scraped: {len(articles)}")
@@ -230,6 +198,42 @@ def main():
         if article['status'] == 'success':
             print(f"\n  • {article['title'][:60]}")
     print(f"{'='*70}\n")
+    
+    # =====================================================
+    # NEW: SAVE TO DATABRICKS INSTEAD OF JSON
+    # =====================================================
+    
+    try:
+        # Prepare data for Databricks
+        df_data = []
+        successful_count = 0
+        
+        for article in articles:
+            if article['status'] == 'success':
+                df_data.append({
+                    'document_id': article.get('url', '').replace('/', '_')[:100],
+                    'title': article.get('title', '')[:255],
+                    'content': article.get('content', ''),
+                    'url': article.get('url', ''),
+                    'source': 'medium',
+                    'scraped_date': datetime.now(),
+                    'content_length': article.get('content_length', 0),
+                    'created_at': datetime.now()
+                })
+                successful_count += 1
+        
+        # Save to Databricks
+        if df_data:
+            df = pd.DataFrame(df_data)
+            spark.createDataFrame(df).write.mode("append").saveAsTable("raw_documents")
+            
+            print(f"✅ Saved {successful_count} Medium articles to Databricks")
+            logger.info(f"[OK] Saved {successful_count} Medium articles to Databricks")
+        
+    except Exception as e:
+        print(f"❌ Error saving to Databricks: {e}")
+        logger.error(f"[ERROR] Failed to save to Databricks: {e}")
+        raise
 
 
 if __name__ == "__main__":

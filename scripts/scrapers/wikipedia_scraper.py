@@ -1,9 +1,5 @@
-"""
-Wikipedia-Specific Scraper
-Optimized for scraping Wikipedia articles
-Uses Wikipedia Python library for easier access
-"""
-
+import pandas as pd
+from datetime import datetime
 import wikipedia
 from typing import Dict, List
 import sys
@@ -148,7 +144,6 @@ def print_results(results: List[Dict]):
     print(f"Total: {successful}/{len(results)} successful")
     print(f"{'='*70}\n")
 
-
 def main():
     """Main execution - scrape educational topics"""
     
@@ -159,7 +154,7 @@ def main():
     # Create scraper
     scraper = WikipediaScraper()
     
-    # Topics to scrape - SIMPLE TITLES THAT WORK
+    # Topics to scrape
     topics = [
         "Machine learning",
         "Deep learning",
@@ -177,14 +172,43 @@ def main():
     # Print results
     print_results(results)
     
-    # Show sample content from first successful article
-    for result in results:
-        if result['status'] == 'success':
-            print(f"\nSAMPLE CONTENT FROM: {result['title']}\n")
-            print("-" * 70)
-            print(result['content'][:500] + "...\n")
-            print("-" * 70)
-            break
+    # =====================================================
+    # NEW: SAVE TO DATABRICKS INSTEAD OF JSON
+    # =====================================================
+    
+    try:
+        # Prepare data for Databricks
+        df_data = []
+        successful_count = 0
+        
+        for result in results:
+            if result['status'] == 'success':
+                df_data.append({
+                    'document_id': result.get('url', '').replace('/', '_')[:100],
+                    'title': result.get('title', '')[:255],
+                    'content': result.get('content', ''),
+                    'url': result.get('url', ''),
+                    'source': 'wikipedia',
+                    'scraped_date': datetime.now(),
+                    'content_length': result.get('content_length', 0),
+                    'created_at': datetime.now()
+                })
+                successful_count += 1
+        
+        # Save to Databricks
+        if df_data:
+            df = pd.DataFrame(df_data)
+            spark.createDataFrame(df).write.mode("append").saveAsTable("raw_documents")
+            
+            print(f"\n✅ Saved {successful_count} Wikipedia documents to Databricks")
+            logger.info(f"[OK] Saved {successful_count} Wikipedia documents to Databricks")
+        else:
+            print("\n⚠️  No successful documents to save")
+            
+    except Exception as e:
+        print(f"\n❌ Error saving to Databricks: {e}")
+        logger.error(f"[ERROR] Failed to save to Databricks: {e}")
+        raise
 
 
 if __name__ == "__main__":

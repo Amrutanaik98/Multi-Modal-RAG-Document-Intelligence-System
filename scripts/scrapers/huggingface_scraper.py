@@ -1,8 +1,4 @@
-"""
-Hugging Face Documentation Scraper
-Scrapes documentation, model cards, and tutorials from Hugging Face
-"""
-
+import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from typing import Dict, List
@@ -158,7 +154,6 @@ class HuggingFaceScraper:
         logger.info(f"[TOTAL] Scraped {len(all_docs)} documentation pages")
         return all_docs
 
-
 def main():
     """Main execution"""
     print("\n" + "="*70)
@@ -168,28 +163,12 @@ def main():
     scraper = HuggingFaceScraper()
     
     # Libraries to scrape
-    libraries = ["transformers"]  # Start with transformers
+    libraries = ["transformers"]
     
     print(f"Scraping {len(libraries)} Hugging Face libraries...\n")
     
     # Scrape docs
     docs = scraper.get_multiple_docs(libraries)
-    
-    # Save results
-    if docs:
-        output_file = RAW_DATA_DIR / "huggingface_docs.json"
-        with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump({
-                'metadata': {
-                    'timestamp': datetime.now().isoformat(),
-                    'source': 'huggingface',
-                    'total_pages': len(docs)
-                },
-                'pages': docs
-            }, f, indent=2, ensure_ascii=False)
-        
-        logger.info(f"[OK] Saved {len(docs)} pages to: {output_file}")
-        print(f"[OK] Saved {len(docs)} pages to: {output_file}")
     
     # Print summary
     print(f"\n{'='*70}")
@@ -198,6 +177,42 @@ def main():
         if doc['status'] == 'success':
             print(f"\n  • {doc['title'][:60]}")
     print(f"{'='*70}\n")
+    
+    # =====================================================
+    # NEW: SAVE TO DATABRICKS INSTEAD OF JSON
+    # =====================================================
+    
+    try:
+        # Prepare data for Databricks
+        df_data = []
+        successful_count = 0
+        
+        for doc in docs:
+            if doc['status'] == 'success':
+                df_data.append({
+                    'document_id': doc.get('url', '').replace('/', '_')[:100],
+                    'title': doc.get('title', '')[:255],
+                    'content': doc.get('content', ''),
+                    'url': doc.get('url', ''),
+                    'source': 'huggingface',
+                    'scraped_date': datetime.now(),
+                    'content_length': doc.get('content_length', 0),
+                    'created_at': datetime.now()
+                })
+                successful_count += 1
+        
+        # Save to Databricks
+        if df_data:
+            df = pd.DataFrame(df_data)
+            spark.createDataFrame(df).write.mode("append").saveAsTable("raw_documents")
+            
+            print(f"✅ Saved {successful_count} HuggingFace docs to Databricks")
+            logger.info(f"[OK] Saved {successful_count} HuggingFace docs to Databricks")
+        
+    except Exception as e:
+        print(f"❌ Error saving to Databricks: {e}")
+        logger.error(f"[ERROR] Failed to save to Databricks: {e}")
+        raise
 
 
 if __name__ == "__main__":

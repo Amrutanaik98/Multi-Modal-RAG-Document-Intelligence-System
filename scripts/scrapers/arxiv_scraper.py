@@ -1,8 +1,4 @@
-"""
-arXiv Scraper
-Scrapes academic papers from arXiv.org
-"""
-
+import pandas as pd
 import requests
 import json
 from typing import Dict, List
@@ -153,22 +149,6 @@ def main():
     # Scrape papers
     papers = scraper.get_multiple_papers(queries, max_results=10)
     
-    # Save to JSON
-    if papers:
-        output_file = RAW_DATA_DIR / "arxiv_papers.json"
-        with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump({
-                'metadata': {
-                    'timestamp': datetime.now().isoformat(),
-                    'source': 'arxiv',
-                    'total_papers': len(papers)
-                },
-                'papers': papers
-            }, f, indent=2, ensure_ascii=False)
-        
-        logger.info(f"[OK] Saved {len(papers)} papers to: {output_file}")
-        print(f"[OK] Saved {len(papers)} papers to: {output_file}")
-    
     # Print summary
     print(f"\n{'='*70}")
     print(f"Total Papers Found: {len(papers)}")
@@ -176,6 +156,39 @@ def main():
         print(f"\n  • {paper['title']}")
         print(f"    Authors: {', '.join(paper['authors'][:2])}")
     print(f"{'='*70}\n")
+    
+    # =====================================================
+    # NEW: SAVE TO DATABRICKS INSTEAD OF JSON
+    # =====================================================
+    
+    try:
+        # Prepare data for Databricks
+        df_data = []
+        
+        for paper in papers:
+            df_data.append({
+                'document_id': paper.get('arxiv_id', '')[:100],
+                'title': paper.get('title', '')[:255],
+                'content': paper.get('summary', ''),
+                'url': paper.get('url', ''),
+                'source': 'arxiv',
+                'scraped_date': datetime.now(),
+                'content_length': len(paper.get('summary', '')),
+                'created_at': datetime.now()
+            })
+        
+        # Save to Databricks
+        if df_data:
+            df = pd.DataFrame(df_data)
+            spark.createDataFrame(df).write.mode("append").saveAsTable("raw_documents")
+            
+            print(f"✅ Saved {len(df_data)} arXiv papers to Databricks")
+            logger.info(f"[OK] Saved {len(df_data)} arXiv papers to Databricks")
+        
+    except Exception as e:
+        print(f"❌ Error saving to Databricks: {e}")
+        logger.error(f"[ERROR] Failed to save to Databricks: {e}")
+        raise
 
 
 if __name__ == "__main__":
