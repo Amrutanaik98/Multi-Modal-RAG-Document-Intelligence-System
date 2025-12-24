@@ -1,3 +1,6 @@
+# frontend/streamlit_app.py
+# RAG Intelligence System - Streamlit Frontend
+
 import streamlit as st
 import requests
 from datetime import datetime
@@ -177,7 +180,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("**Powered by:** Sentence Transformers + HuggingFace QA | **Type:** Retrieval-Augmented Generation")
+st.markdown("**Powered by:** Sentence Transformers + HuggingFace | **Type:** Retrieval-Augmented Generation")
 
 # ============================================================================
 # SIDEBAR CONFIGURATION
@@ -206,6 +209,13 @@ with st.sidebar:
         help="Number of documents to fetch (higher = more context)"
     )
     
+    # LLM Model Selection
+    llm_model = st.selectbox(
+        "LLM Model",
+        options=["mistral", "zephyr", "phi", "neural_chat", "llama2"],
+        help="Choose which LLM model to use"
+    )
+    
     st.divider()
     
     # System Info
@@ -227,7 +237,7 @@ with st.sidebar:
     
     st.divider()
     
-    st.markdown("**Version:** 3.0.0 | **Last Updated:** 2025")
+    st.markdown("**Version:** 4.0.0 | **Last Updated:** 2025")
 
 # ============================================================================
 # CHECK API HEALTH
@@ -246,11 +256,11 @@ try:
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            st.metric("📚 Documents Loaded", health_data.get('documents', 'N/A'))
+            st.metric("📚 Documents Loaded", health_data.get('documents_loaded', 'N/A'))
         
         with col2:
-            st.metric("🧠 Embedding Type", 
-                     "SentenceTransformer" if "Sentence" in health_data.get('embedding_type', '') else "Fallback")
+            st.metric("🧠 Embedding Dim", 
+                     health_data.get('embedding_dimension', 384))
         
         with col3:
             st.metric("✅ Status", "Connected")
@@ -267,9 +277,9 @@ except requests.exceptions.ConnectionError:
     st.info("""
     **How to start the backend:**
     ```bash
-    python fastapi_backend_improved.py
+    python backend/fastapi_backend.py
     ```
-    Then wait for: `📍 URL: http://localhost:8000`
+    Then wait for: `INFO: Uvicorn running on http://0.0.0.0:8000`
     """)
 
 except Exception as e:
@@ -300,7 +310,6 @@ with col3:
     clear_button = st.button("🔄 Clear", use_container_width=True)
 
 if clear_button:
-    user_query = ""
     st.rerun()
 
 # ============================================================================
@@ -318,7 +327,10 @@ if submit_button:
                     f"{api_url}/query",
                     json={
                         "query": user_query,
-                        "top_k": top_k
+                        "top_k": top_k,
+                        "llm_model": llm_model,
+                        "include_summary": False,
+                        "max_answer_tokens": 500
                     },
                     timeout=30
                 )
@@ -398,9 +410,10 @@ if submit_button:
                         )
                     
                     with col4:
+                        response_time = result.get('response_time', 0)
                         st.metric(
-                            "⏱️ Model Used",
-                            "HuggingFace" if result.get('model_used') else "Fallback"
+                            "⏱️ Response Time",
+                            f"{response_time:.2f}s"
                         )
                 
                 else:
@@ -412,7 +425,8 @@ if submit_button:
                 st.info("""
                 **To start the backend:**
                 ```bash
-                python fastapi_backend_improved.py
+                cd backend
+                python fastapi_backend.py
                 ```
                 """)
             
@@ -441,7 +455,7 @@ examples = [
 for col, (query_text, key) in zip([col1, col2, col3], examples):
     with col:
         if st.button(query_text, use_container_width=True, key=key):
-            st.session_state.query = query_text
+            st.session_state.user_query = query_text
             st.rerun()
 
 st.divider()
@@ -453,7 +467,7 @@ st.divider()
 st.markdown("""
 ---
 <div style='text-align: center; color: #666; padding: 20px 0;'>
-    <h4>🚀 RAG Intelligence System v3.0</h4>
+    <h4>🚀 RAG Intelligence System v4.0</h4>
     <p>Built with <b>Streamlit</b> | Powered by <b>FastAPI</b> & <b>HuggingFace</b></p>
     
     <details>
@@ -462,11 +476,11 @@ st.markdown("""
     Streamlit Frontend (Port 8501) ↓<br>
     HTTP POST /query ↓<br>
     FastAPI Backend (Port 8000) ↓<br>
-    SentenceTransformer + HuggingFace QA ↓<br>
+    SentenceTransformer + HuggingFace LLM ↓<br>
     Answer + Relevant Sources
     </p>
     </details>
     
-    <p style='font-size: 12px; margin-top: 10px;'>© 2025 | Multi-Modal RAG System</p>
+    <p style='font-size: 12px; margin-top: 10px;'>© 2025 | Retrieval-Augmented Generation System</p>
 </div>
 """, unsafe_allow_html=True)
