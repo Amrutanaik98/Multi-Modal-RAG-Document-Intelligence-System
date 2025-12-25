@@ -1,5 +1,7 @@
-# frontend/streamlit_app.py
-# RAG Intelligence System - Streamlit Frontend
+"""
+RAG Intelligence System - Streamlit Frontend
+Fixed UI with proper contrast and visibility
+"""
 
 import streamlit as st
 import requests
@@ -11,297 +13,293 @@ import time
 # ============================================================================
 
 st.set_page_config(
-    page_title="RAG Intelligence System",
+    page_title="🧠 RAG Intelligence System",
     page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ============================================================================
-# CUSTOM CSS - MODERN DESIGN
+# CUSTOM CSS - FIXED VISIBILITY
 # ============================================================================
 
 st.markdown("""
 <style>
-    /* Main Container */
+    /* Main container */
     .main {
-        padding: 2rem 1rem;
+        padding: 2rem;
+        background-color: #ffffff;
     }
     
-    /* Title Styling */
+    /* Sidebar - DARK BACKGROUND WITH LIGHT TEXT */
+    [data-testid="stSidebar"] {
+        background-color: #1a1a1a;
+    }
+    
+    /* Sidebar text - LIGHT AND VISIBLE */
+    [data-testid="stSidebar"] * {
+        color: #ffffff !important;
+    }
+    
+    /* Sidebar headers */
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3 {
+        color: #ffffff !important;
+        font-weight: 700;
+    }
+    
+    /* Sidebar labels */
+    [data-testid="stSidebar"] label {
+        color: #e0e0e0 !important;
+        font-weight: 600;
+    }
+    
+    /* Sidebar input fields */
+    [data-testid="stSidebar"] input,
+    [data-testid="stSidebar"] select {
+        background-color: #333333 !important;
+        color: #ffffff !important;
+        border: 1px solid #555555 !important;
+    }
+    
+    /* Slider text in sidebar */
+    [data-testid="stSidebar"] .stSlider {
+        color: #ffffff !important;
+    }
+    
+    /* Expander headers in sidebar */
+    [data-testid="stSidebar"] .streamlit-expanderHeader {
+        background-color: #2d2d2d !important;
+        color: #ffffff !important;
+        border-left: 4px solid #667eea !important;
+    }
+    
+    /* Main title */
     .title-container {
         text-align: center;
-        padding: 2rem 0 1rem 0;
+        padding: 2rem;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 10px;
+        border-radius: 12px;
         color: white;
         margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
     
-    /* Query Input Box */
-    .query-box {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        border-radius: 12px;
-        padding: 20px;
-        margin: 20px 0;
-        border-left: 5px solid #667eea;
+    .title-container h1 {
+        margin: 0;
+        font-size: 2.5em;
+        font-weight: 800;
     }
     
-    /* Answer Box */
+    /* Section headers */
+    .section-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin: 20px 0 15px 0;
+        font-weight: 700;
+        font-size: 1.1em;
+    }
+    
+    /* Answer box */
     .answer-box {
         background: linear-gradient(135deg, #e7f3ff 0%, #d9e7ff 100%);
-        border-left: 5px solid #2196F3;
+        border-left: 6px solid #2196F3;
         padding: 20px;
-        border-radius: 10px;
+        border-radius: 8px;
         margin: 15px 0;
         color: #000;
-        font-size: 15px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        font-size: 16px;
+        line-height: 1.6;
+        box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
     }
     
-    /* Chunk Container */
+    /* Chunk container */
     .chunk-container {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        border-left: 5px solid #667eea;
+        background: #f8f9fa;
+        border-left: 6px solid #667eea;
         padding: 18px;
         margin: 12px 0;
         border-radius: 8px;
-        color: #1a1a1a;
-        font-size: 14px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        transition: transform 0.2s;
+        color: #2d3748;
+        font-size: 15px;
+        line-height: 1.6;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     
     .chunk-container:hover {
         transform: translateX(5px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
     }
     
-    /* Metric Cards */
-    .metric-card {
-        background: white;
-        border-radius: 10px;
-        padding: 15px;
-        border-left: 4px solid #667eea;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-    }
-    
-    /* Status Indicators */
+    /* Status indicators */
     .status-connected {
-        padding: 12px;
-        background-color: #d4edda;
-        border: 1px solid #28a745;
-        border-radius: 6px;
+        padding: 15px 20px;
+        background: #d4edda;
+        border: 2px solid #28a745;
+        border-radius: 8px;
         color: #155724;
-        font-weight: 500;
+        font-weight: 600;
     }
     
     .status-disconnected {
-        padding: 12px;
-        background-color: #f8d7da;
-        border: 1px solid #f5c6cb;
-        border-radius: 6px;
+        padding: 15px 20px;
+        background: #f8d7da;
+        border: 2px solid #dc3545;
+        border-radius: 8px;
         color: #721c24;
-        font-weight: 500;
+        font-weight: 600;
     }
     
-    /* Button Styling */
+    /* Buttons */
     .stButton > button {
         border-radius: 8px;
         padding: 12px 24px;
-        font-weight: 600;
-        border: none;
+        font-weight: 700;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        transition: all 0.3s ease;
+        color: white !important;
+        border: none;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
     
     .stButton > button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
     }
     
-    /* Expander Styling */
-    .streamlit-expanderHeader {
-        background-color: #f0f2f6;
-        border-radius: 6px;
-        font-weight: 600;
-    }
-    
-    /* Divider */
-    hr {
-        margin: 2rem 0;
-        border: none;
-        height: 1px;
-        background: linear-gradient(to right, transparent, #667eea, transparent);
-    }
-    
-    /* Sidebar */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
-    }
-    
-    /* Success Message */
-    .stSuccess {
-        background-color: #d4edda !important;
-        color: #155724 !important;
+    /* Metrics */
+    .stMetric {
+        background-color: #f8f9fa;
+        padding: 15px;
         border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     
-    /* Error Message */
-    .stError {
-        background-color: #f8d7da !important;
-        color: #721c24 !important;
+    /* Text area */
+    .stTextArea textarea {
+        font-size: 15px;
+        padding: 12px;
         border-radius: 8px;
-    }
-    
-    /* Header Text */
-    h1, h2, h3 {
-        color: #2d3748;
-        font-weight: 700;
-    }
-    
-    /* Subheader */
-    [data-testid="stMarkdownContainer"] h2 {
-        margin-top: 1.5rem;
-        margin-bottom: 1rem;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ============================================================================
-# TITLE & HEADER
+# TITLE
 # ============================================================================
 
 st.markdown("""
 <div class="title-container">
     <h1>🧠 RAG Intelligence System</h1>
-    <p style="font-size: 18px; margin: 10px 0;">Semantic AI-Powered Document Search & Intelligence</p>
+    <p>Semantic AI-Powered Document Search & Question Answering</p>
 </div>
 """, unsafe_allow_html=True)
-
-st.markdown("**Powered by:** Sentence Transformers + HuggingFace | **Type:** Retrieval-Augmented Generation")
 
 # ============================================================================
 # SIDEBAR CONFIGURATION
 # ============================================================================
 
 with st.sidebar:
-    st.header("⚙️ Configuration")
+    st.markdown("## ⚙️ CONFIGURATION")
     
-    # API Configuration
-    st.subheader("🔗 API Settings")
-    api_url = st.text_input(
-        "FastAPI Backend URL",
-        value="http://localhost:8000",
-        help="URL where your FastAPI backend is running"
-    )
+    # API Settings
+    with st.expander("🔗 API Settings", expanded=True):
+        api_url = st.text_input(
+            "Backend URL",
+            value="http://localhost:8000",
+            help="FastAPI backend URL"
+        )
     
     st.divider()
     
-    # Query Settings
-    st.subheader("🔍 Search Settings")
-    top_k = st.slider(
-        "Results to retrieve",
-        min_value=1,
-        max_value=10,
-        value=5,
-        help="Number of documents to fetch (higher = more context)"
-    )
-    
-    # LLM Model Selection
-    llm_model = st.selectbox(
-        "LLM Model",
-        options=["mistral", "zephyr", "phi", "neural_chat", "llama2"],
-        help="Choose which LLM model to use"
-    )
+    # Search Settings
+    with st.expander("🔍 Search Settings", expanded=True):
+        top_k = st.slider(
+            "Results to Retrieve",
+            min_value=1,
+            max_value=10,
+            value=5,
+            help="Number of documents to fetch"
+        )
+        
+        llm_model = st.selectbox(
+            "LLM Model",
+            options=["mistral", "zephyr", "phi", "neural_chat", "llama2"],
+            help="Choose language model"
+        )
+        
+        max_tokens = st.slider(
+            "Answer Length",
+            min_value=100,
+            max_value=1000,
+            value=500,
+            step=100,
+            help="Max response tokens"
+        )
     
     st.divider()
     
     # System Info
-    st.subheader("ℹ️ About This System")
-    st.info("""
-    **RAG Document Query System**
-    
-    ✨ **Features:**
-    - 📚 Semantic search using embeddings
-    - 🧠 AI-powered question answering
-    - 🎯 High accuracy retrieval
-    - ⚡ Real-time responses
-    
-    **Architecture:**
-    - Frontend: Streamlit
-    - Backend: FastAPI
-    - Models: Sentence Transformers + HuggingFace
-    """)
+    with st.expander("📊 System Info", expanded=False):
+        st.info("""
+        **RAG System Features:**
+        - 📚 Semantic search
+        - 🧠 AI-powered answers
+        - 🎯 High accuracy
+        - ⚡ Fast retrieval
+        """)
     
     st.divider()
-    
-    st.markdown("**Version:** 4.0.0 | **Last Updated:** 2025")
+    st.caption("**Version:** 5.0.0 | **2025**")
 
 # ============================================================================
-# CHECK API HEALTH
+# HEALTH CHECK
 # ============================================================================
 
 st.divider()
 
-st.subheader("📡 System Status", divider="rainbow")
+col1, col2, col3 = st.columns(3)
 
-try:
-    health_response = requests.get(f"{api_url}/health", timeout=3)
-    if health_response.status_code == 200:
-        health_data = health_response.json()
-        
-        # Display Status Cards
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.metric("📚 Documents Loaded", health_data.get('documents_loaded', 'N/A'))
-        
-        with col2:
-            st.metric("🧠 Embedding Dim", 
-                     health_data.get('embedding_dimension', 384))
-        
-        with col3:
-            st.metric("✅ Status", "Connected")
-        
-        st.markdown("""<div class="status-connected">✅ Successfully connected to FastAPI backend!</div>""", 
-                   unsafe_allow_html=True)
-    else:
-        st.error(f"❌ API Error: Status code {health_response.status_code}")
-
-except requests.exceptions.ConnectionError:
-    st.markdown("""<div class="status-disconnected">❌ Cannot connect to FastAPI backend</div>""", 
-               unsafe_allow_html=True)
-    st.error(f"**Backend not running at: {api_url}**")
-    st.info("""
-    **How to start the backend:**
-    ```bash
-    python backend/fastapi_backend.py
-    ```
-    Then wait for: `INFO: Uvicorn running on http://0.0.0.0:8000`
-    """)
-
-except Exception as e:
-    st.error(f"Error: {str(e)}")
-
-st.divider()
+with col1:
+    with st.spinner("🔄 Checking backend..."):
+        try:
+            response = requests.get(f"{api_url}/health", timeout=3)
+            if response.status_code == 200:
+                data = response.json()
+                st.markdown(f"""
+                <div class="status-connected">
+                ✅ Connected | {data.get('documents', 0)} docs loaded
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="status-disconnected">
+                ❌ Backend Error: {response.status_code}
+                </div>
+                """, unsafe_allow_html=True)
+        except:
+            st.markdown("""
+            <div class="status-disconnected">
+            ❌ Backend Offline
+            </div>
+            """, unsafe_allow_html=True)
 
 # ============================================================================
 # QUERY SECTION
 # ============================================================================
 
-st.subheader("🔍 Ask Your Question", divider="blue")
+st.markdown('<div class="section-header">🔍 Ask Your Question</div>', unsafe_allow_html=True)
 
 user_query = st.text_area(
-    "Enter your question about the documents:",
-    placeholder="Example: What is machine learning? How do transformers work? What is RAG?",
-    height=120,
+    "Enter your question:",
+    placeholder="Example: What is machine learning? How do transformers work?",
+    height=100,
     label_visibility="collapsed"
 )
 
-# Search button
-col1, col2, col3 = st.columns([2, 1, 1])
+col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
 
 with col2:
     submit_button = st.button("🔍 Search", use_container_width=True, type="primary")
@@ -309,28 +307,34 @@ with col2:
 with col3:
     clear_button = st.button("🔄 Clear", use_container_width=True)
 
+with col4:
+    example_button = st.button("💡 Example", use_container_width=True)
+
 if clear_button:
     st.rerun()
 
+if example_button:
+    st.session_state.query = "What is machine learning?"
+    user_query = "What is machine learning?"
+    st.rerun()
+
 # ============================================================================
-# RESULTS SECTION
+# RESULTS
 # ============================================================================
 
 if submit_button:
     if not user_query or len(user_query.strip()) == 0:
-        st.warning("⚠️ Please enter a question to proceed")
+        st.warning("⚠️ Please enter a question")
     else:
-        with st.spinner("🔄 Searching documents and generating answer..."):
+        with st.spinner("🔄 Searching and generating answer..."):
             try:
-                # Make request to FastAPI backend
                 response = requests.post(
                     f"{api_url}/query",
                     json={
                         "query": user_query,
                         "top_k": top_k,
                         "llm_model": llm_model,
-                        "include_summary": False,
-                        "max_answer_tokens": 500
+                        "max_answer_tokens": max_tokens
                     },
                     timeout=30
                 )
@@ -338,124 +342,98 @@ if submit_button:
                 if response.status_code == 200:
                     result = response.json()
                     
-                    # Display Answer Section
-                    st.subheader("📖 AI-Generated Answer", divider="green")
-                    st.markdown(f'<div class="answer-box">{result["answer"]}</div>', 
+                    # Answer
+                    st.markdown('<div class="section-header">📖 AI Answer</div>', 
+                               unsafe_allow_html=True)
+                    st.markdown(
+                        f'<div class="answer-box">{result.get("answer", "No answer generated")}</div>',
+                        unsafe_allow_html=True
+                    )
+                    
+                    st.divider()
+                    
+                    # Retrieved Documents
+                    st.markdown('<div class="section-header">📚 Retrieved Documents</div>', 
                                unsafe_allow_html=True)
                     
-                    st.divider()
+                    chunks = result.get('retrieved_chunks', [])
                     
-                    # Display Retrieved Documents
-                    st.subheader("📚 Retrieved Documents", divider="orange")
-                    
-                    retrieved_chunks = result.get('retrieved_chunks', [])
-                    
-                    if retrieved_chunks:
-                        for i, chunk in enumerate(retrieved_chunks, 1):
-                            similarity_pct = chunk['similarity_score'] * 100
+                    if chunks:
+                        for i, chunk in enumerate(chunks, 1):
+                            score = chunk.get('similarity_score', 0) * 100
                             
-                            # Color coding based on similarity
-                            if similarity_pct >= 80:
-                                color = "🟢"
-                            elif similarity_pct >= 60:
-                                color = "🟡"
-                            else:
-                                color = "🔵"
+                            emoji = "🟢" if score >= 80 else "🟡" if score >= 60 else "🔵"
                             
                             with st.expander(
-                                f"{color} Document {i} - Match: {similarity_pct:.1f}%",
+                                f"{emoji} Source {i} - {chunk.get('document_id', 'Unknown')[:30]}... ({score:.1f}%)",
                                 expanded=(i == 1)
                             ):
-                                st.markdown(f'<div class="chunk-container">{chunk["chunk_text"]}</div>', 
-                                          unsafe_allow_html=True)
+                                st.markdown(
+                                    f'<div class="chunk-container">{chunk.get("chunk_text", "No text")}</div>',
+                                    unsafe_allow_html=True
+                                )
                                 
-                                col_meta1, col_meta2, col_meta3 = st.columns(3)
-                                with col_meta1:
-                                    st.caption(f"📌 ID: {chunk['chunk_id']}")
-                                with col_meta2:
-                                    st.caption(f"📄 Doc: {chunk['document_id']}")
-                                with col_meta3:
-                                    st.caption(f"⭐ Score: {chunk['similarity_score']:.2%}")
-                    else:
-                        st.warning("No relevant documents found")
+                                col1, col2, col3 = st.columns(3)
+                                with col1:
+                                    st.caption(f"📌 {chunk.get('chunk_id', 'N/A')}")
+                                with col2:
+                                    st.caption(f"🏷️ {chunk.get('topic', 'unknown')}")
+                                with col3:
+                                    st.caption(f"⭐ {score:.1f}%")
                     
                     st.divider()
                     
-                    # Display Statistics
-                    st.subheader("📊 Retrieval Statistics", divider="violet")
+                    # Statistics
+                    st.markdown('<div class="section-header">📊 Statistics</div>', 
+                               unsafe_allow_html=True)
                     
-                    col1, col2, col3, col4 = st.columns(4)
+                    stat_col1, stat_col2, stat_col3, stat_col4 = st.columns(4)
                     
-                    with col1:
-                        st.metric(
-                            "📚 Retrieved",
-                            len(retrieved_chunks)
-                        )
+                    with stat_col1:
+                        st.metric("📚 Retrieved", len(chunks))
                     
-                    with col2:
-                        if retrieved_chunks:
-                            best_match = retrieved_chunks[0]['similarity_score'] * 100
-                            st.metric(
-                                "🎯 Best Match",
-                                f"{best_match:.1f}%"
-                            )
-                        else:
-                            st.metric("🎯 Best Match", "N/A")
+                    with stat_col2:
+                        best = chunks[0]['similarity_score'] * 100 if chunks else 0
+                        st.metric("🎯 Best Match", f"{best:.1f}%")
                     
-                    with col3:
-                        avg_sim = result.get('avg_similarity', 0) * 100
-                        st.metric(
-                            "📈 Avg Match",
-                            f"{avg_sim:.1f}%"
-                        )
+                    with stat_col3:
+                        avg = result.get('avg_similarity', 0) * 100
+                        st.metric("📈 Avg Match", f"{avg:.1f}%")
                     
-                    with col4:
-                        response_time = result.get('response_time', 0)
-                        st.metric(
-                            "⏱️ Response Time",
-                            f"{response_time:.2f}s"
-                        )
+                    with stat_col4:
+                        time_taken = result.get('response_time', 0)
+                        st.metric("⏱️ Time", f"{time_taken:.2f}s")
                 
                 else:
                     st.error(f"❌ API Error: {response.status_code}")
-                    st.code(response.text, language="json")
             
             except requests.exceptions.ConnectionError:
-                st.error("❌ Cannot connect to FastAPI backend")
-                st.info("""
-                **To start the backend:**
-                ```bash
-                cd backend
-                python fastapi_backend.py
-                ```
-                """)
-            
-            except requests.exceptions.Timeout:
-                st.error("❌ Request timeout - backend took too long")
+                st.error("❌ Cannot connect to backend")
+                st.info(f"Start backend: `python backend/fastapi_backend.py`")
             
             except Exception as e:
                 st.error(f"❌ Error: {str(e)}")
 
+# ============================================================================
+# EXAMPLES
+# ============================================================================
+
 st.divider()
 
-# ============================================================================
-# EXAMPLE QUERIES
-# ============================================================================
-
-st.subheader("💡 Try These Example Queries", divider="red")
+st.markdown('<div class="section-header">💡 Example Questions</div>', unsafe_allow_html=True)
 
 col1, col2, col3 = st.columns(3)
 
 examples = [
-    ("What is machine learning?", "q1"),
-    ("Explain transformers in NLP", "q2"),
-    ("What is RAG?", "q3"),
+    "What is machine learning?",
+    "Explain transformers in NLP",
+    "What is RAG?"
 ]
 
-for col, (query_text, key) in zip([col1, col2, col3], examples):
+for col, example in zip([col1, col2, col3], examples):
     with col:
-        if st.button(query_text, use_container_width=True, key=key):
-            st.session_state.user_query = query_text
+        if st.button(example, use_container_width=True):
+            user_query = example
             st.rerun()
 
 st.divider()
@@ -466,21 +444,9 @@ st.divider()
 
 st.markdown("""
 ---
-<div style='text-align: center; color: #666; padding: 20px 0;'>
-    <h4>🚀 RAG Intelligence System v4.0</h4>
-    <p>Built with <b>Streamlit</b> | Powered by <b>FastAPI</b> & <b>HuggingFace</b></p>
-    
-    <details>
-    <summary><b>📋 System Architecture</b></summary>
-    <p>
-    Streamlit Frontend (Port 8501) ↓<br>
-    HTTP POST /query ↓<br>
-    FastAPI Backend (Port 8000) ↓<br>
-    SentenceTransformer + HuggingFace LLM ↓<br>
-    Answer + Relevant Sources
-    </p>
-    </details>
-    
-    <p style='font-size: 12px; margin-top: 10px;'>© 2025 | Retrieval-Augmented Generation System</p>
+<div style="text-align: center; color: #666; padding: 20px;">
+    <p><strong>RAG Intelligence System v5.0</strong></p>
+    <p>Streamlit + FastAPI + Embeddings + LLM</p>
+    <p style="font-size: 12px; margin-top: 10px;">© 2025 | Retrieval-Augmented Generation</p>
 </div>
 """, unsafe_allow_html=True)

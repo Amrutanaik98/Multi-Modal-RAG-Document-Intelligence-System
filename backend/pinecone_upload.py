@@ -42,7 +42,7 @@ class PineconeVectorDB:
         """
         self.api_key = api_key or os.getenv("PINECONE_API_KEY")
         self.environment = environment
-        self.index_name = "rag-documents"
+        self.index_name = "educational-rag"
         
         if not self.api_key:
             logger.warning("⚠️  PINECONE_API_KEY not found in environment variables")
