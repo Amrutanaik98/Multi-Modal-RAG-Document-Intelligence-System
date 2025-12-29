@@ -44,14 +44,6 @@ The RAG Intelligence System is an end-to-end solution that:
 - **Health Monitoring**: System status and performance metrics
 - **Response Statistics**: Retrieval scores, timing, document attribution
 
-## 🛠️ Installation
-
-### Prerequisites
-- Python 3.9+
-- pip or conda
-- API Keys (optional but recommended):
-  - HuggingFace API Token: https://huggingface.co/settings/tokens
-  - Pinecone API Key: https://www.pinecone.io/
 
 ### Step 1: Clone & Install Dependencies
 
@@ -83,7 +75,7 @@ python scripts/embedding/embedding_pipeline.py
 python scripts/processing/metadata_extractor.py
 ```
 
-### Step 4: Upload to Pinecone
+### Step 3: Upload to Pinecone
 
 ```bash
 python backend/embedding_to_pinecone.py
@@ -233,32 +225,6 @@ Metadata Extraction (keywords, topics, difficulty)
 Pinecone Upload (serverless indexing)
         ↓
 Query Interface (FastAPI + Streamlit)
-```
-
-## ⚙️ Configuration
-
-Key settings in `config.py`:
-- `CHUNK_SIZE`: 512 characters
-- `CHUNK_OVERLAP`: 50 characters
-- `EMBEDDING_MODEL`: all-MiniLM-L6-v2
-- `MAX_EMBEDDING_BATCH_SIZE`: 32
-- `PROCESSED_DATA_DIR`: data/processed/
-- `OUTPUT_DIR`: output/
-
-## 🧪 Testing
-
-```bash
-# Test HuggingFace connection
-python backend/huggingface_integration_llm.py
-
-# Test Pinecone connection
-python backend/pinecone_upload.py
-
-# Test embedding quality
-python scripts/embedding_quality.py
-
-# Run example queries
-python rag_query_interface.py
 ```
 
 
