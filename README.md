@@ -13,31 +13,6 @@ The RAG Intelligence System is an end-to-end solution that:
 - **Serves** queries via FastAPI REST API
 - **Visualizes** results through Streamlit UI
 
-## 📁 Project Structure
-
-```
-rag-system/
-├── backend/
-│   ├── fastapi_backend.py              # Main FastAPI server
-│   ├── huggingface_integration_llm.py  # LLM integration (Mistral, Zephyr, Phi, etc.)
-│   ├── pinecone_upload.py              # Pinecone vector database management
-│   ├── embedding_to_pinecone.py        # Embedding pipeline with Pinecone upload
-│   └── main_orchestrator.py            # Databricks notebook - complete pipeline
-│
-├── scripts/
-│   ├── embedding_pipeline.py           # Text → Embeddings conversion
-│   ├── embedding_quality.py            # Embedding validation & analysis
-│   ├── metadata_extractor.py           # Metadata extraction (keywords, topics, difficulty)
-│   ├── text_chunker.py                 # Text splitting into chunks
-│   └── text_cleaner.py                 # Text preprocessing & normalization
-│
-├── frontend/
-│   └── streamlit_app.py                # Interactive web UI
-│
-├── rag_query_interface.py              # Query execution and RAG logic
-└── README.md
-```
-
 ## 🚀 Features
 
 ### Phase 1: Data Preparation
@@ -93,35 +68,19 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### Step 2: Configure Environment Variables
 
-Create a `.env` file in the project root:
 
-```env
-# HuggingFace LLM API
-HF_API_TOKEN=your_huggingface_api_key
-
-# Pinecone Vector Database
-PINECONE_API_KEY=your_pinecone_api_key
-
-# Optional: Data sources
-WIKIPEDIA_ENABLED=true
-ARXIV_ENABLED=true
-HUGGINGFACE_ENABLED=true
-```
-
-### Step 3: Run the Complete Pipeline
+### Step 2: Run the Complete Pipeline
 
 ```bash
 # Data scraping + processing + embedding (Databricks notebook)
-python backend/main_orchestrator.py
+python pipelines/main_orchestrator.py
 
 # Or run individual steps:
-python scripts/text_cleaner.py
-python scripts/text_chunker.py
-python scripts/embedding_pipeline.py
-python scripts/embedding_quality.py
-python scripts/metadata_extractor.py
+python scripts/processing/text_cleaner.py
+python scripts/processing/text_chunker.py
+python scripts/embedding/embedding_pipeline.py
+python scripts/processing/metadata_extractor.py
 ```
 
 ### Step 4: Upload to Pinecone
@@ -302,29 +261,6 @@ python scripts/embedding_quality.py
 python rag_query_interface.py
 ```
 
-## 📈 Performance
-
-- **Embedding Generation**: ~100 docs/min (batch processing)
-- **Vector Search**: <50ms (Pinecone)
-- **LLM Response**: 2-5s (HuggingFace API)
-- **Total Response Time**: 3-7s per query
-
-## 🔒 Security
-
-- API keys stored in `.env` (not in version control)
-- Input validation on all endpoints
-- Rate limiting available
-- Metadata size limits (prevent abuse)
-
-## 🐛 Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| HuggingFace API key error | Check `.env` file, regenerate token at huggingface.co |
-| Pinecone connection failed | Verify API key, check region setting |
-| No documents found | Run data scraping pipeline first |
-| Backend won't start | Check port 8000 is free, check dependencies |
-| Slow queries | Increase `top_k`, optimize Pinecone index |
 
 ## 📝 Example Queries
 
@@ -346,20 +282,6 @@ python rag_query_interface.py
 - [ ] Advanced filtering & metadata search
 - [ ] Feedback loop for answer quality
 
-## 📄 License
 
-MIT License - Free for personal and commercial use
 
-## 🤝 Contributing
 
-Contributions welcome! Please submit issues and pull requests.
-
-## 📞 Support
-
-- Documentation: `/docs` endpoint
-- API Docs: `http://localhost:8000/docs`
-- Issues: GitHub Issues
-
----
-
-**Made with ❤️ for AI & RAG systems** | Version 5.0.0 | 2025
