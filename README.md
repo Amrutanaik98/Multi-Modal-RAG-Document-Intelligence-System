@@ -1,4 +1,4 @@
-# 🧠 RAG Intelligence System v5.0
+# 🧠 RAG Document Intelligence System
 
 A complete **Retrieval-Augmented Generation (RAG)** pipeline for building AI-powered document search and question-answering systems. This project combines semantic search, vector embeddings, and large language models to provide intelligent answers grounded in your document collection.
 
